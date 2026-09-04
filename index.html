@@ -704,267 +704,279 @@
         ></main>
         
         
-        <script>
-            
-            
-            /* =========================================
-           車両データ
-        ========================================= */
-            
-            const cars = [
-            
-            {
-                name: "DCP Mochi",
-                brand: "",
-                price: 16000000,
-                category: "コンパクト",
-                image: "mochi1.webp"
-            },
-            
-            {
-                name: "Nagasaki Blazer",
-                brand: "",
-                price: 800000,
-                category: "オフロード",
-                image: "blazer.webp"
-            },
-            
-            {
-                name: "DCP Mojave",
-                brand: "",
-                price: 18000000,
-                category: "SUV",
-                image: "Mojave.webp"
-            },
-            
-            {
-                name: "DCP Iris Z",
-                brand: "",
-                price: 5000000,
-                category: "コンパクト",
-                image: "Iris.webp"
-            }
-            
-            ];
-            
-            
-            /* =========================================
-           現在のカテゴリー
-        ========================================= */
-            
-            let currentCategory = "All";
-            
-            
-            /* =========================================
-           価格表示
-        ========================================= */
-            
-            function formatPrice(price) {
-                
-                return "¥" + price.toLocaleString("ja-JP");
-                
-            }
-            
-            
-            /* =========================================
-           車両表示
-        ========================================= */
-            
-            function displayCars(list) {
-                
-                const catalog =
-                document.getElementById("catalog");
-                
-                catalog.innerHTML = "";
-                
-                
-                if (list.length === 0) {
-                    
-                    catalog.innerHTML = `
-                    <div class="no-results">
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+    /* =========================================
+       Supabase設定
+    ========================================= */
+
+    const SUPABASE_URL = "https://mnadiqgwmpmdwrtuolpk.supabase.co/rest/v1/";
+    const SUPABASE_KEY = "sb_publishable_MD27EHkde6gvLEewo8O_Iw_i7qEsufb";
+
+    const supabase = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+    /* =========================================
+       車両データ
+    ========================================= */
+
+    let cars = [];
+
+
+    /* =========================================
+       現在のカテゴリー
+    ========================================= */
+
+    let currentCategory = "All";
+
+
+    /* =========================================
+       価格表示
+    ========================================= */
+
+    function formatPrice(price) {
+
+        return "¥" + Number(price).toLocaleString("ja-JP");
+
+    }
+
+
+    /* =========================================
+       Supabaseから車両取得
+    ========================================= */
+
+    async function loadCars() {
+
+        const { data, error } = await supabase
+            .from("vehicles")
+            .select("*")
+            .order("id", { ascending: true });
+
+
+        if (error) {
+
+            console.error("車両データ取得エラー:", error);
+
+            document.getElementById("catalog").innerHTML = `
+                <div class="no-results">
+                    車両データを取得できませんでした
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        cars = data.map(car => ({
+
+            name: car.name,
+            brand: car.brand || "",
+            price: car.price,
+            category: car.category,
+            image: car.image_url || ""
+
+        }));
+
+
+        searchCars();
+
+    }
+
+
+    /* =========================================
+       車両表示
+    ========================================= */
+
+    function displayCars(list) {
+
+        const catalog =
+            document.getElementById("catalog");
+
+        catalog.innerHTML = "";
+
+
+        if (list.length === 0) {
+
+            catalog.innerHTML = `
+                <div class="no-results">
                     該当する車両がありません
+                </div>
+            `;
+
+        }
+
+
+        list.forEach((car, index) => {
+
+            const card =
+                document.createElement("div");
+
+            card.className = "card";
+
+
+            let imageHTML;
+
+
+            if (car.image) {
+
+                imageHTML = `
+                    <img
+                        src="${car.image}"
+                        alt="${car.name}"
+                        loading="lazy"
+                    >
+                `;
+
+            } else {
+
+                imageHTML = `
+                    <div class="no-image">
+                        IMAGE NOT AVAILABLE
                     </div>
-                    `;
-                    
-                }
-                
-                
-                list.forEach((car, index) => {
-                        
-                        const card =
-                        document.createElement("div");
-                        
-                        card.className = "card";
-                        
-                        
-                        /* 画像 */
-                        
-                        let imageHTML;
-                        
-                        
-                        if (car.image) {
-                            
-                            imageHTML = `
-                            <img
-                            src="${car.image}"
-                            alt="${car.name}"
-                            loading="lazy"
-                            >
-                            `;
-                            
-                        } else {
-                            
-                            imageHTML = `
-                            <div class="no-image">
-                            IMAGE NOT AVAILABLE
-                            </div>
-                            `;
-                            
-                        }
-                        
-                        
-                        /* カード */
-                        
-                        card.innerHTML = `
-                        
-                        <div class="car-image">
-                        
-                        ${imageHTML}
-                        
-                        <div class="image-number">
+                `;
+
+            }
+
+
+            card.innerHTML = `
+
+                <div class="car-image">
+
+                    ${imageHTML}
+
+                    <div class="image-number">
                         ${String(index + 1).padStart(2, "0")}
-                        </div>
-                        
-                        </div>
-                        
-                        
-                        <div class="car-info">
-                        
-                        <div class="brand">
+                    </div>
+
+                </div>
+
+
+                <div class="car-info">
+
+                    <div class="brand">
                         ${car.brand || "GOGO MOTOR"}
-                        </div>
-                        
-                        <div class="car-name">
+                    </div>
+
+                    <div class="car-name">
                         ${car.name}
-                        </div>
-                        
-                        
-                        <div class="card-bottom">
-                        
+                    </div>
+
+
+                    <div class="card-bottom">
+
                         <div class="price">
-                        ${formatPrice(car.price)}
+                            ${formatPrice(car.price)}
                         </div>
-                        
+
                         <div class="view">
-                        VIEW →
+                            VIEW →
                         </div>
-                        
-                        </div>
-                        
-                        </div>
-                        
-                        `;
-                        
-                        
-                        catalog.appendChild(card);
-                        
-                });
-                
-                
-                /* 件数 */
-                
-                document.getElementById(
-                    "resultCount"
-                ).textContent = list.length;
-                
-            }
-            
-            
-            /* =========================================
-           カテゴリー変更
-        ========================================= */
-            
-            function filterCategory(category, button) {
-                
-                currentCategory = category;
-                
-                
-                document
-                .querySelectorAll(".category")
-                .forEach(btn => {
-                        
-                        btn.classList.remove("active");
-                        
-                });
-                
-                
-                button.classList.add("active");
-                
-                
-                searchCars();
-                
-            }
-            
-            
-            /* =========================================
-           検索
-        ========================================= */
-            
-            function searchCars() {
-                
-                const keyword =
-                document
+
+                    </div>
+
+                </div>
+
+            `;
+
+
+            catalog.appendChild(card);
+
+        });
+
+
+        document.getElementById(
+            "resultCount"
+        ).textContent = list.length;
+
+    }
+
+
+    /* =========================================
+       カテゴリー変更
+    ========================================= */
+
+    function filterCategory(category, button) {
+
+        currentCategory = category;
+
+
+        document
+            .querySelectorAll(".category")
+            .forEach(btn => {
+
+                btn.classList.remove("active");
+
+            });
+
+
+        button.classList.add("active");
+
+
+        searchCars();
+
+    }
+
+
+    /* =========================================
+       検索
+    ========================================= */
+
+    function searchCars() {
+
+        const keyword =
+            document
                 .getElementById("searchInput")
                 .value
                 .toLowerCase();
-                
-                
-                const result =
-                cars.filter(car => {
-                        
-                        
-                        /* カテゴリー */
-                        
-                        const matchCategory =
-                        currentCategory === "All" ||
-                        car.category === currentCategory;
-                        
-                        
-                        /* キーワード */
-                        
-                        const matchKeyword =
-                        car.name
+
+
+        const result =
+            cars.filter(car => {
+
+
+                const matchCategory =
+                    currentCategory === "All" ||
+                    car.category === currentCategory;
+
+
+                const matchKeyword =
+                    car.name
                         .toLowerCase()
                         .includes(keyword)
-                        
-                        ||
-                        
-                        car.brand
+
+                    ||
+
+                    car.brand
                         .toLowerCase()
                         .includes(keyword);
-                        
-                        
-                        return (
-                            matchCategory &&
-                            matchKeyword
-                        );
-                        
-                });
-                
-                
-                displayCars(result);
-                
-            }
-            
-            
-            /* =========================================
-           初期表示
-        ========================================= */
-            
-            displayCars(cars);
-            
-            
-        </script>
+
+
+                return (
+                    matchCategory &&
+                    matchKeyword
+                );
+
+            });
+
+
+        displayCars(result);
+
+    }
+
+
+    /* =========================================
+       初期読み込み
+    ========================================= */
+
+    loadCars();
+
+</script>
         
         
     </body>
